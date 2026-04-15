@@ -1,0 +1,106 @@
+//仍需处理 -- 并加以理解
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <cmath>
+#include <algorithm>
+using namespace std;
+
+// 方向：上下左右
+int dx[] = {-1, 1, 0, 0};
+int dy[] = {0, 0, -1, 1};
+
+// 地图大小
+const int ROW = 5;
+const int COL = 5;
+
+// 节点结构
+struct Node {
+    int x, y;        // 当前坐标
+    int g, h, f;     // 代价
+    Node* parent;    // 父节点（用于回溯路径）
+
+    Node(int x_, int y_) : x(x_), y(y_), g(0), h(0), f(0), parent(nullptr) {}
+};
+
+// 曼哈顿距离（启发函数 h）
+int manhattan(int x1, int y1, int x2, int y2) {
+    return abs(x1 - x2) + abs(y1 - y2);
+}
+
+// A* 算法
+void AStar(int map[ROW][COL], int sx, int sy, int ex, int ey) {
+    // 优先队列：f 越小越优先
+    priority_queue<pair<int, Node*>, vector<pair<int, Node*>>, greater<pair<int, Node*>>> openList;
+
+    // 访问标记
+    bool closeList[ROW][COL] = {false};
+
+    // 起点
+    Node* start = new Node(sx, sy);
+    openList.push({start->f, start});
+
+    while (!openList.empty()) {
+        // 取出 f 最小的节点
+        Node* cur = openList.top().second;
+        openList.pop();
+
+        int x = cur->x;
+        int y = cur->y;
+
+        // 如果已经访问过，跳过
+        if (closeList[x][y]) continue;
+        closeList[x][y] = true;
+
+        // 到达终点 → 输出路径
+        if (x == ex && y == ey) {
+            cout << "找到最短路径！总步数：" << cur->g << endl;
+            cout << "路径回溯：" << endl;
+            while (cur != nullptr) {
+                cout << "(" << cur->x << "," << cur->y << ") ";
+                cur = cur->parent;
+            }
+            cout << endl;
+            return;
+        }
+
+        // 遍历四个方向
+        for (int i = 0; i < 4; i++) {
+            int nx = x + dx[i];
+            int ny = y + dy[i];
+
+            // 越界 / 是墙 / 已关闭 → 跳过
+            if (nx < 0 || nx >= ROW || ny < 0 || ny >= COL) continue;
+            if (map[nx][ny] == 1 || closeList[nx][ny]) continue;
+
+            // 创建邻居节点
+            Node* neighbor = new Node(nx, ny);
+            neighbor->parent = cur;
+
+            // 计算 g, h, f
+            neighbor->g = cur->g + 1;
+            neighbor->h = manhattan(nx, ny, ex, ey);
+            neighbor->f = neighbor->g + neighbor->h;
+
+            // 加入队列
+            openList.push({neighbor->f, neighbor});
+        }
+    }
+
+    cout << "无法到达终点！" << endl;
+}
+
+int main() {
+    // 地图：0=空地，1=墙
+    int map[ROW][COL] = {
+        {0, 1, 0, 0, 0},
+        {0, 1, 0, 1, 0},
+        {0, 0, 0, 1, 0},
+        {0, 1, 1, 1, 0},
+        {0, 0, 0, 0, 0}
+    };
+
+    // 起点(0,0)，终点(4,4)
+    AStar(map, 0, 0, 4, 4);
+    return 0;
+}
